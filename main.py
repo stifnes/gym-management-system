@@ -1,10 +1,10 @@
 from datetime import date
+
 customers = []
 trainers = []
 equipments = []
 exercise_plans = []
 subscriptions = []
-
 
 
 class Subscription:
@@ -65,7 +65,7 @@ class Customer:
             raise ValueError("start_date and end_date must be strings")
 
         try:
-            subscription = Subscription(self, trainer, exercise_plan, start_date, end_date)
+            subscription = Subscription(self, trainer.name, exercise_plan.plan_name, start_date, end_date)
             subscriptions.append(subscription)
             self.update_subscription_file()
             print('Subscription created successfully')
@@ -79,7 +79,7 @@ class Customer:
             for subscription in subscriptions:
                 print(subscription)
 
-    def update_subscription(self, subscription_index, trainer_name=None, exercise_plan=None, start_date=None, end_date=None):
+    def update_subscription(self, subscription_index, trainer=None, exercise_plan=None, start_date=None, end_date=None):
         if not isinstance(subscription_index, int):
             raise ValueError("subscription_index must be an integer")
         if subscription_index < 0 or subscription_index >= len(subscriptions):
@@ -126,9 +126,10 @@ class Customer:
             with open('subscriptions.txt', "w") as f:
                 for subscription in subscriptions:
                     f.write(
-                        f"{subscription.customer.name},{subscription.trainer.name},{subscription.exercise_plan},{subscription.start_date},{subscription.end_date}\n")
+                        f"{self.name},{subscription.trainer},{subscription.exercise_plan},{subscription.start_date},{subscription.end_date}\n")
         except Exception as e:
             print(f"Error updating subscription file: {e}")
+
 
 def customer_login():
     username = input("Enter your username: ")
@@ -192,8 +193,6 @@ def customer_menu(customer):
         def checkTrainer():
             for trainer in trainers:
                 if trainer.name == trainer_name:
-                    print("Trainer" + trainer.name + " exists")
-                    # trainer = Trainer(name, pwd, age, specialization)
                     # do something with the trainer object
                     return trainer
                 else:
@@ -202,15 +201,50 @@ def customer_menu(customer):
                     return
 
         trainer1 = checkTrainer()
-        equipment1 = Equipment('bench', 'working')
-        exercise_plan1 = ExercisePlan(trainer1, equipment1, 30)
-        customer.create_subscription(trainer1, exercise_plan1, "2023-05-14", "2023-06-14")
+        exercise_plan_name = input('Enter the name of the exercise plan you want to choose(e.g cardio)')
+
+        def checkPlan():
+            for plan in exercise_plans:
+                if plan.plan_name == exercise_plan_name:
+                    return plan
+                else:
+                    print("Plan does not exists. Create a new trainer")
+                    main()
+                    return
+
+        exercise_plan = checkPlan()
+        customer.create_subscription(trainer1, exercise_plan, "2023-05-14", "2023-06-14")
     elif choice == "3":
         # update the first subscription's trainer and duration
-        trainer2 = Trainer("Bob Johnson", "Certified Personal Trainer")
-        equipment2 = Equipment('bench', 'working')
-        exercise_plan2 = ExercisePlan("Cardio", trainer2, equipment2, 30)
-        customer.update_subscription(0, trainer=trainer2, exercise_plan=exercise_plan2)
+        if len(subscriptions) == 0:
+            print("You currently dont have any subscriptions, Create a subscription first")
+        else:
+            trainer_name = input('Please enter the name of the trainer you want to have')
+
+            # check if trainer exists
+            def checkTrainer():
+                for trainer in trainers:
+                    if trainer.name == trainer_name:
+                        # do something with the trainer object
+                        return trainer
+                    else:
+                        print("Trainer does not exists. Try a different trainer")
+                        main()
+                        return
+
+            trainer1 = checkTrainer()
+
+            def checkPlan():
+                for plan in exercise_plans:
+                    if plan.plan_name == exercise_plan_name:
+                        return plan
+                    else:
+                        print("Plan does not exists. Create a new trainer")
+                        main()
+                        return
+
+            exercise_plan = checkPlan()
+            customer.update_subscription(0, trainer1, exercise_plan, "2023-05-14", "2023-06-14")
     elif choice == "4":
         # delete the second subscription
         subscription_index = int(
@@ -254,8 +288,9 @@ class Equipment:
             else:
                 print(f"Equipment {name} not found.")
 
+
 class ExercisePlan:
-    def __init__(self, trainer_name , plan_name, equipment, duration):
+    def __init__(self, trainer_name, plan_name, equipment, duration):
         self.trainer_name = trainer_name
         self.plan_name = plan_name
         self.equipment = equipment
@@ -273,8 +308,10 @@ class ExercisePlan:
     def write_to_file(self):
         with open('exercisePlans.txt', 'a') as f:
             f.write(f"{self.trainer_name},{self.plan_name},{self.equipment},{self.duration}\n")
+
     def __str__(self):
         return f"Trainer: {self.trainer_name}, Plan Name: {self.plan_name}, Equipment: {self.equipment}, Duration: {self.duration}"
+
 
 class Trainer:
     def __init__(self, name, password, age, specialization):
@@ -293,7 +330,6 @@ class Trainer:
         with open('trainers.txt', 'a') as f:
             f.write(f"{name},{password},{age},{specialization}\n")
         print(f"Trainer {name} created successfully.")
-
 
     def create_exercise_plan(self, plan_name, equipment, duration):
         exercise_plan = ExercisePlan(self, plan_name, equipment, duration)
@@ -407,7 +443,7 @@ with open("trainers.txt", "r") as file:
 with open("subscriptions.txt", "r") as file:
     for line in file:
         data = line.strip().split(",")
-        subscription = Subscription(data[0], data[1], data[2], data[3],data[3])
+        subscription = Subscription(data[0], data[1], data[2], data[3], data[4])
         subscriptions.append(subscription)
 
 with open("exercisePlans.txt", "r") as file:
@@ -416,10 +452,23 @@ with open("exercisePlans.txt", "r") as file:
         exercise_plan = ExercisePlan(data[0], data[1], data[2], data[3])
         exercise_plans.append(exercise_plan)
 
+with open("customers.txt", "r") as file:
+    for line in file:
+        data = line.strip().split(",")
+        customer = Customer(data[0], data[1], data[2], data[3], data[4], data[4])
+        customers.append(customer)
+
+with open("equipment.txt", "r") as file:
+    for line in file:
+        data = line.strip().split(",")
+        equipment = Equipment(data[0], data[1])
+        equipments.append(equipment)
+
 
 # main program
 def main():
     while True:
+        print("**WELCOME TO TU DUBLIN PYTHON GYM**", '\n')
         print("1. Customer Login")
         print("2. Trainer Login")
         print("3. Create Customer Account")
@@ -427,7 +476,8 @@ def main():
         print("5. Delete Customer Account")
         print("6. Add Equipment")
         print("7. Delete Equipment")
-        choice = int(input("Enter your choice (1-4): "))
+        print("8. Exit")
+        choice = int(input("Enter your choice (1-8): "))
         if choice == 1:
             customer_login()
             break
@@ -439,13 +489,16 @@ def main():
         elif choice == 4:
             Trainer.create_trainer()
         elif choice == 5:
-            name = input("Enter the name of the customer to delete")
+            name = input("Enter the name of the customer to delete: ")
             Customer.remove_customer(name)
         elif choice == 6:
             Equipment.add_equipment()
         elif choice == 7:
-            name = input("Enter the name of the equipment to delete")
+            name = input("Enter the name of the equipment to delete: ")
             Equipment.remove_equipment(name)
+        elif choice == 8:
+            print("It is sad to see you go, come back soon!!!")
+            break
         else:
             print("Invalid choice. Please try again.")
 

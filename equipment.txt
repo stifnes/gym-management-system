@@ -1,1 +1,3 @@
-Treadmill,working
+Pullupbar,working
+treadmill,working
+weight plates,working
