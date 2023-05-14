@@ -79,7 +79,7 @@ class Customer:
             for subscription in subscriptions:
                 print(subscription)
 
-    def update_subscription(self, subscription_index, trainer=None, exercise_plan=None, start_date=None, end_date=None):
+    def update_subscription(self, subscription_index, trainer_name=None, exercise_plan=None, start_date=None, end_date=None):
         if not isinstance(subscription_index, int):
             raise ValueError("subscription_index must be an integer")
         if subscription_index < 0 or subscription_index >= len(subscriptions):
@@ -111,8 +111,8 @@ class Customer:
     def delete_subscription(self, subscription_index):
         if not isinstance(subscription_index, int):
             raise ValueError("subscription_index must be an integer")
-        if subscription_index < 0 or subscription_index >= len(subscriptions):
-            raise ValueError(f"subscription_index out of range (0-{len(subscriptions) - 1})")
+        if subscription_index < 0:
+            raise ValueError(f"subscription_index cannot be negative")
 
         try:
             del subscriptions[subscription_index]
@@ -224,71 +224,6 @@ def customer_menu(customer):
     else:
         print("Invalid choice. Please try again.")
 
-class Trainer:
-    def __init__(self, name, password, age, specialization):
-        self.name = name
-        self.password = password
-        self.age = age
-        self.specialization = specialization
-        self.exercise_plans = []
-
-    @staticmethod
-    def create_trainer():
-        name = input("Enter trainer name: ")
-        password = input("Enter password: ")
-        age = input("Enter age: ")
-        specialization = input("Enter specialization: ")
-        with open('trainers.txt', 'a') as f:
-            f.write(f"{name},{password},{age},{specialization}\n")
-        print(f"Trainer {name} created successfully.")
-
-
-    def create_exercise_plan(self, plan_name, equipment, duration):
-        exercise_plan = ExercisePlan(self, plan_name, equipment, duration)
-        with open('exercisePlans.txt', 'a') as f:
-            f.write(f"{self.name},{plan_name},{equipment},{duration}\n")
-        return exercise_plan
-
-    def read_exercise_plans(self):
-        with open('exercisePlans.txt', 'r') as f:
-            for line in f:
-                fields = line.strip().split(', ')
-                if fields[0] == self.name:
-                    plan_name = fields[1]
-                    # equipment = Equipment(fields[2], fields[3])
-                    # duration = int(fields[4])
-                    # exercise_plan = ExercisePlan(self.name, plan_name, equipment, duration)
-                    # exercise_plans.append(exercise_plan)
-            return plan_name
-
-    def update_exercise_plan(self, old_plan, new_equipment, new_duration):
-        exercise_plans = self.read_exercise_plans()
-        if old_plan not in exercise_plans:
-            raise ValueError(f"{self.name} does not have an exercise plan with the given details.")
-        for exercise_plan in exercise_plans:
-            if exercise_plan == old_plan:
-                exercise_plan.equipment = new_equipment
-                exercise_plan.duration = new_duration
-        with open('exercisePlans.txt', 'w') as f:
-            for exercise_plan in exercise_plans:
-                f.write(f"{self.name}, {exercise_plan.equipment.name}, {exercise_plan.duration}\n")
-
-    def delete_exercise_plan(self, exercise_plan_name):
-        # exercise_plans = self.read_exercise_plans()
-        for plan in exercise_plans:
-            print(plan.plan_name)
-            print(plan.trainer)
-        if exercise_plan_name not in exercise_plans:
-            raise ValueError(f"{self.name} does not have an exercise plan with the given details.")
-        exercise_plans.remove(exercise_plan_name)
-        with open('exercisePlans.txt', 'w') as f:
-            for exercise_plan in exercise_plans:
-                f.write(f"{self.name},{exercise_plan_name}, {exercise_plan.equipment.name}, {exercise_plan.duration}\n")
-
-    def write_exercise_plans_to_file(self):
-        with open('exercisePlans.txt', 'w') as f:
-            for plan in self.exercise_plans:
-                f.write(f"{self.name},{plan.equipment.name},{plan.duration}\n")
 
 class Equipment:
     def __init__(self, name, status):
@@ -320,8 +255,8 @@ class Equipment:
                 print(f"Equipment {name} not found.")
 
 class ExercisePlan:
-    def __init__(self,trainer, plan_name, equipment, duration):
-        self.trainer = trainer
+    def __init__(self, trainer_name , plan_name, equipment, duration):
+        self.trainer_name = trainer_name
         self.plan_name = plan_name
         self.equipment = equipment
         self.duration = duration
@@ -337,7 +272,93 @@ class ExercisePlan:
 
     def write_to_file(self):
         with open('exercisePlans.txt', 'a') as f:
-            f.write(f"{self.trainer.name},{self.plan_name},{self.equipment.name},{self.duration}\n")
+            f.write(f"{self.trainer_name},{self.plan_name},{self.equipment},{self.duration}\n")
+    def __str__(self):
+        return f"Trainer: {self.trainer_name}, Plan Name: {self.plan_name}, Equipment: {self.equipment}, Duration: {self.duration}"
+
+class Trainer:
+    def __init__(self, name, password, age, specialization):
+        self.name = name
+        self.password = password
+        self.age = age
+        self.specialization = specialization
+        self.exercise_plans = []
+
+    @staticmethod
+    def create_trainer():
+        name = input("Enter trainer name: ")
+        password = input("Enter password: ")
+        age = input("Enter age: ")
+        specialization = input("Enter specialization: ")
+        with open('trainers.txt', 'a') as f:
+            f.write(f"{name},{password},{age},{specialization}\n")
+        print(f"Trainer {name} created successfully.")
+
+
+    def create_exercise_plan(self, plan_name, equipment, duration):
+        exercise_plan = ExercisePlan(self, plan_name, equipment, duration)
+        with open('exercisePlans.txt', 'a') as f:
+            f.write(f"{self.name},{plan_name},{equipment},{duration}\n")
+        return exercise_plan
+
+    def read_exercise_plans(self):
+        with open('exercisePlans.txt', 'r') as f:
+            for line in f:
+                fields = line.strip().split(',')
+                if fields[0] == self.name:
+                    plan_name = fields[1]
+                    equipment = fields[2]
+                    duration = int(fields[3])
+                    exercise_plan = ExercisePlan(self.name, plan_name, equipment, duration)
+            return exercise_plan
+
+    def update_exercise_plan(self, old_plan_name, new_equipment, new_duration):
+        for plan in exercise_plans:
+            print(plan.plan_name)
+            if plan.plan_name == old_plan_name:
+                plan.equipment = new_equipment
+                plan.duration = new_duration
+                print('Plan updated successfully')
+            else:
+                print('Plan does not exists')
+        with open('exercisePlans.txt', 'w') as f:
+            for exercise_plan in exercise_plans:
+                f.write(f"{self.name},{exercise_plan.plan_name},{exercise_plan.equipment},{exercise_plan.duration}\n")
+
+    # def delete_exercise_plan(self, exercise_plan_name):
+    #     # exercise_plans = self.read_exercise_plans()
+    #     for plan in exercise_plans:
+    #         print(plan.plan_name)
+    #         print(plan.trainer)
+    #     if exercise_plan_name not in exercise_plans:
+    #         raise ValueError(f"{self.name} does not have an exercise plan with the given details.")
+    #     exercise_plans.remove(exercise_plan_name)
+    #     with open('exercisePlans.txt', 'w') as f:
+    #         for exercise_plan in exercise_plans:
+    #             f.write(f"{self.name},{exercise_plan_name}, {exercise_plan.equipment.name}, {exercise_plan.duration}\n")
+    def delete_exercise_plan(self, plan_index):
+        if not isinstance(plan_index, int):
+            raise ValueError("plan_index must be an integer")
+        if plan_index < 0 or plan_index > len(exercise_plans):
+            raise ValueError(f"plan_index out of range (0-{len(exercise_plans) - 1})")
+        print(exercise_plans[plan_index].plan_name)
+        try:
+            del exercise_plans[plan_index]
+            self.write_exercise_plans_to_file()
+            print("Exercise plan Deleted Successfully")
+        except Exception as e:
+
+            print(f"Error deleting Exercise plan : {e}")
+
+    def write_exercise_plans_to_file(self):
+        try:
+            with open('exercisePlans.txt.txt', "w") as f:
+                for plan in exercise_plans:
+                    f.write(
+                        f"{self.name},{plan.plan_name},{plan.equipment},{plan.duration}\n")
+        except Exception as e:
+            print(f"Error updating subscription file: {e}")
+
 
 def trainer_menu(trainer):
     print("Trainer Menu:")
@@ -351,8 +372,6 @@ def trainer_menu(trainer):
     if choice == "1":
         # print out the customer's subscriptions
         print(trainer.read_exercise_plans())
-        # for plan in allplans:
-        #     print("Plan name: " + plan[1])
     elif choice == "2":
         # create a new exercise plan for the trainer
         plan_name = input("please enter the name of the plan: ")
@@ -361,15 +380,15 @@ def trainer_menu(trainer):
         print(trainer.name, plan_name, equipment1.name, duration)
         trainer.create_exercise_plan(plan_name, equipment1.name, duration)
     elif choice == "3":
-        # update the first subscription's trainer and duration
-        trainer2 = Trainer("Bob Johnson", "Certified Personal Trainer")
-        equipment2 = Equipment('bench', 'working')
-        exercise_plan2 = ExercisePlan("Cardio", trainer2, equipment2, 30)
-        trainer.update_subscription(0, trainer=trainer2, exercise_plan=exercise_plan2)
+        # update the exercise plan of trainer
+        plan_name = input("please enter the name of the plan: ")
+        new_equipment = input("enter new equipment: ")
+        new_duration = int(input("enter new duration: "))
+        trainer.update_exercise_plan(plan_name, new_equipment, new_duration)
     elif choice == "4":
         # delete an exercise plan
-        plan_name = input('Please enter the name of the plan to be deleted: ')
-        trainer.delete_exercise_plan(plan_name)
+        plan_index = int(input('Please enter the number of the plan to be deleted: '))
+        trainer.delete_exercise_plan(plan_index - 1)
     elif choice == "5":
         trainer.remove_trainer(trainer.name)
     elif choice == "6":
@@ -400,7 +419,6 @@ with open("exercisePlans.txt", "r") as file:
 
 # main program
 def main():
-
     while True:
         print("1. Customer Login")
         print("2. Trainer Login")

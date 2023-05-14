@@ -1,1 +1,1 @@
-Paul,cardio,bench,10
+Paul,cardio,treadmill,120
