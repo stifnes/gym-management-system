@@ -1,3 +1,1 @@
-1, Mike Johnson, mike.johnson@email.com, password789, weightlifting
-2, Sarah Lee, sarah.lee@email.com, password101, yoga
-223, Samuel, samuel@123.com, samuel123, heavy weight trainer
+Paul,password,30,personal training
