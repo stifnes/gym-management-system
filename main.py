@@ -16,6 +16,7 @@ class Customer:
         self.address = address
         self.subscriptions = []
 
+
     def create(self):
         """This is the method that creates a customer"""
         with open('customers.json', 'r') as f:
@@ -178,6 +179,8 @@ class Customer:
             json.dump(customers_data, f)
             print('Subscription deleted from customer successfully')
 
+    def __str__(self):
+        return f"{self.name}, {self.password}, {self.age}, {self.gender}, {self.email}, {self.address}"
 
 class Subscription:
     subscription_id = 1
@@ -260,6 +263,8 @@ class Subscription:
         with open('subscriptions.json', 'w') as f:
             json.dump(data, f)
 
+    def __str__(self):
+        return f"Subscription from {self.start_date} to {self.end_date} for {self.customer_name} with trainer {self.trainer_name}"
 
 class Equipment:
     def __init__(self, name, description):
@@ -321,6 +326,9 @@ class Equipment:
             f.truncate()
         print('Equipment deleted successfully.')
 
+    def __str__(self):
+        return f"{self.name}, {self.description}"
+
 
 class Trainer:
     trainer_id = 1
@@ -333,6 +341,9 @@ class Trainer:
         self.email = email
         self.speciality = speciality
         self.exercise_plans = []
+
+    def __str__(self):
+        return f"{self.name}'s specializes in {self.speciality}, email: {self.email}"
 
     def create(self):
         """This is the function that creates a trainer"""
@@ -562,6 +573,8 @@ class ExercisePlan:
             f.truncate()
         print('Exercise plan deleted successfully.')
 
+    def __str__(self):
+        return f"{self.trainer}'s {self.name} workout plan: {self.duration} minutes"
 
 def customer_menu(customer):
     """This is the function that runs the main tasks of a customer"""
