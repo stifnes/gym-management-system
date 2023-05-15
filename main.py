@@ -1,7 +1,10 @@
 import json
 
+
 class Customer:
+    # this is to assign id's to customer on an incremental base
     last_customer_id = 0
+
     def __init__(self, name, password, age, gender, email, address):
         self.customer_id = Customer.last_customer_id + 1
         Customer.last_customer_id += 1
@@ -14,9 +17,10 @@ class Customer:
         self.subscriptions = []
 
     def create(self):
+        """This is the method that creates a customer"""
         with open('customers.json', 'r') as f:
             data = json.load(f)
-
+        # make a dictionary of a customer data
         data.append({
             'customer_id': self.customer_id,
             'name': self.name,
@@ -27,12 +31,14 @@ class Customer:
             'address': self.address,
             'subscriptions': self.subscriptions
         })
+        # append that dictionary to the customers.json file
         with open('customers.json', 'w') as f:
             json.dump(data, f)
             print('Customer Created Successfully')
 
     @staticmethod
     def read(name):
+        """This is a static method that reads a customer from the file based on its name"""
         with open('customers.json', 'r') as f:
             data = json.load(f)
 
@@ -42,6 +48,7 @@ class Customer:
 
     @staticmethod
     def delete(name):
+        """This is the function that deletes a customer from the file based on its name"""
         with open('customers.json', 'r') as f:
             data = json.load(f)
 
@@ -52,22 +59,25 @@ class Customer:
 
         with open('customers.json', 'w') as f:
             json.dump(data, f)
+        # return to main menu
         main()
 
     @staticmethod
     def login(name, password):
+        """This is the function that logins a customer into the application"""
         with open('customers.json', 'r') as f:
             data = json.load(f)
         if len(data) == 0:
-            print('No records found')
+            print('No records found, Try creating an account')
         else:
             for customer in data:
                 if customer['name'] == name and customer['password'] == password:
                     customer_menu(customer)
                 else:
-                    print("Incorrect Username or Password")
+                    print("Incorrect Username or Password. Try again")
 
     def create_subscription(self):
+        """This is the function creates a subscription for the customer"""
         trainer_name = input("Enter Trainer Name")
         plan_name = input("Enter Plan Name")
         start_date = input("Enter start date as YYYY-MM-DD")
@@ -93,6 +103,7 @@ class Customer:
             print('Subscription Added to customer successfully')
 
     def read_subscription(self, trainer_name):
+        """This is the function that reads a subscription for the customer based on the trainers name"""
         with open('customers.json', 'r') as f:
             data = json.load(f)
 
@@ -105,6 +116,8 @@ class Customer:
             print('Subscription not found')
 
     def update_subscription(self, trainer_name, start_date=None, end_date=None):
+        """This is the function that updates a subscription's start or end date for the customer based on the
+        trainers name"""
         with open('subscriptions.json', 'r') as f:
             subscription_data = json.load(f)
 
@@ -138,13 +151,14 @@ class Customer:
             print('Customers Subscription Update Successfully')
 
     def delete_subscription(self, trainer_name):
+        """This is the function that deletes a subscription for the customer based on the trainers name"""
         with open('subscriptions.json', 'r') as f:
             subscription_data = json.load(f)
 
         for index, subscription in enumerate(subscription_data):
             if subscription['customer_name'] == self['name'] and subscription['trainer_name'] == trainer_name:
                 del subscription_data[index]
-                print('Your Subscription with' + trainer_name + ' is deleted successfully')
+                print('Your Subscription with ' + trainer_name + ' is deleted successfully')
                 break
 
         with open('subscriptions.json', 'w') as f:
@@ -164,6 +178,7 @@ class Customer:
             json.dump(customers_data, f)
             print('Subscription deleted from customer successfully')
 
+
 class Subscription:
     subscription_id = 1
 
@@ -177,8 +192,12 @@ class Subscription:
         Subscription.subscription_id += 1
 
     def create(self):
-        with open('subscriptions.json', 'r') as f:
-            data = json.load(f)
+        try:
+            with open('subscriptions.json', 'r') as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            print('File not found')
+            return
 
         data.append({
             'subscription_id': self.subscription_id,
@@ -195,8 +214,12 @@ class Subscription:
 
     @staticmethod
     def read(customer_name):
-        with open('subscriptions.json', 'r') as f:
-            data = json.load(f)
+        try:
+            with open('subscriptions.json', 'r') as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            print('File not found')
+            return
 
         subscriptions = []
         for subscription in data:
@@ -237,6 +260,7 @@ class Subscription:
         with open('subscriptions.json', 'w') as f:
             json.dump(data, f)
 
+
 class Equipment:
     def __init__(self, name, description):
         self.name = name
@@ -244,6 +268,7 @@ class Equipment:
 
     @staticmethod
     def read_all():
+        """This is the function that returns all equipment available at the gym"""
         with open('equipments.json', 'r') as f:
             data = json.load(f)
             equipments = []
@@ -256,6 +281,7 @@ class Equipment:
 
     @staticmethod
     def read(name):
+        """This is the function that returns ane equipment based on its name"""
         with open('equipments.json', 'r') as f:
             data = json.load(f)
             for equipment in data:
@@ -265,6 +291,7 @@ class Equipment:
 
     @staticmethod
     def create():
+        """This is the function that creates an equipment"""
         name = input('Enter equipment name: ')
         description = input('Enter equipment description: ')
         with open('equipments.json', 'r+') as f:
@@ -281,6 +308,7 @@ class Equipment:
 
     @staticmethod
     def delete(name):
+        """This is the function that deletes ane equipment based on its name"""
         with open('equipments.json', 'r+') as f:
             data = json.load(f)
             equipments = data
@@ -307,6 +335,7 @@ class Trainer:
         self.exercise_plans = []
 
     def create(self):
+        """This is the function that creates a trainer"""
         with open('trainers.json', 'r') as f:
             data = json.load(f)
 
@@ -325,6 +354,7 @@ class Trainer:
 
     @staticmethod
     def read(name):
+        """This is the function that returns a trainer based on its name"""
         with open('trainers.json', 'r') as f:
             data = json.load(f)
 
@@ -335,6 +365,7 @@ class Trainer:
         return None
 
     def update(self):
+        """This is the function that updates a trainer"""
         with open('trainers.json', 'r') as f:
             data = json.load(f)
 
@@ -352,6 +383,7 @@ class Trainer:
 
     @staticmethod
     def delete(name):
+        """This is the function that deletes a trainer based on the name given"""
         with open('trainers.json', 'r') as f:
             data = json.load(f)
 
@@ -366,6 +398,7 @@ class Trainer:
 
     @staticmethod
     def login(name, password):
+        """This is the function that logins a trainer into the application"""
         with open('trainers.json', 'r') as f:
             data = json.load(f)
         if len(data) == 0:
@@ -376,6 +409,7 @@ class Trainer:
                     trainer_menu(trainer)
 
     def read_all_plans(self):
+        """This is the function that returns all the exercise plans of a trainer"""
         plans = ExercisePlan.read_all()
         trainer_plans = []
         for plan in plans:
@@ -384,13 +418,15 @@ class Trainer:
         return trainer_plans
 
     def read_plan(self):
+        """This is the function that returns one plan of a trainer"""
         return ExercisePlan.read(self['name'])
 
     def create_plan(self):
+        """This is the function that creates an exercise plan for a trainer"""
         plan_name = input('Enter plan name: ')
         equipment = input('Enter equipment name: ')
         duration = input('Enter duration: ')
-        exercise_plan = ExercisePlan(self['name'],plan_name, equipment, duration)
+        exercise_plan = ExercisePlan(self['name'], plan_name, equipment, duration)
         exercise_plan.create()
 
         with open('trainers.json', 'r') as f:
@@ -409,6 +445,7 @@ class Trainer:
             print('Exercise Plan added to trainer successfully')
 
     def update_plan(self):
+        """This is the function that updates an exercise plan for trainer"""
         exercise_plan = ExercisePlan.read(self['name'])
         if exercise_plan:
             exercise_plan.name = input('Enter new plan name: ')
@@ -437,6 +474,7 @@ class Trainer:
             print('Plan not updated, try again')
 
     def delete_plan(self, plan_name):
+        """This is the function that deletes an exercise plan of a trainer"""
         ExercisePlan.delete(self['name'], plan_name)
 
         with open('trainers.json', 'r') as f:
@@ -468,7 +506,7 @@ class ExercisePlan:
             data = json.load(f)
             plans = []
             for plan in data:
-                plans.append(ExercisePlan(plan['trainer'],plan['name'], plan['equipment'], plan['duration']))
+                plans.append(ExercisePlan(plan['trainer'], plan['name'], plan['equipment'], plan['duration']))
             return plans
 
     @staticmethod
@@ -525,12 +563,11 @@ class ExercisePlan:
         print('Exercise plan deleted successfully.')
 
 
-
 def customer_menu(customer):
-    """This is the main program of tha application"""
+    """This is the function that runs the main tasks of a customer"""
 
     while True:
-        print("WELCOME " + customer['name'], '\n')
+        print("Welcome " + customer['name'] + '. Choose any of the options to continue', '\n')
         print("1. Delete Customer Account")
         print("2. View account details")
         print("3. Create Subscription")
@@ -540,6 +577,7 @@ def customer_menu(customer):
         print("7. Logout")
         choice = int(input("Enter your choice (1-8): "))
         if choice == 1:
+            # Delete customer account
             confirmDelete = input("Are you sure you want to delete your account? (Enter yes/no)")
             if confirmDelete == 'yes':
                 Customer.delete(customer['name'])
@@ -547,19 +585,48 @@ def customer_menu(customer):
                 customer_menu(customer)
                 break
         elif choice == 2:
-            print(customer['name'], customer['password'], customer['gender'], customer['age'], customer['email'])
+            # View customer details
+            print("Name: {:<10} Password: {:<10} Gender: {:<10} Age: {:<10} Email: {:<20}".format(customer['name'],
+                                                                                                  customer['password'],
+                                                                                                  customer['gender'],
+                                                                                                  customer['age'],
+                                                                                                  customer['email']),
+                  '\n')
         elif choice == 3:
+            # create the subscription
             Customer.create_subscription(customer)
         elif choice == 4:
-            trainer_name = input("Enter your trainer name to see your subscription")
-            print(Customer.read_subscription(customer, trainer_name))
+            # return the subscription
+            try:
+                trainer_name = input("Enter your trainer name to see your subscription: ")
+                if not trainer_name:
+                    raise ValueError("Trainer Name cannot be empty")
+                subscription = Customer.read_subscription(customer, trainer_name)
+                print("Trainer Name: {:<10} Plan Name: {:<10} start_date: {:<10} end_date: {:<10}".format(subscription['trainer_name'],
+                                                                                                      subscription['plan_name'],
+                                                                                                      subscription['start_date'],
+                                                                                                      subscription['end_date']),
+                      '\n')
+            except ValueError as e:
+                print(e)
         elif choice == 5:
-            trainer_name = input('Enter your trainer name to delete your subscription')
-            Customer.delete_subscription(customer, trainer_name)
+            # delete the of a subscription
+            try:
+                trainer_name = input('Enter your trainer name to delete your subscription: ')
+                if not trainer_name:
+                    raise ValueError("Trainer Name cannot be empty")
+                Customer.delete_subscription(customer, trainer_name)
+            except ValueError as e:
+                print(e)
         elif choice == 6:
             # update the start date of a subscription
-            trainer_name = input('Enter your trainer name to update your subscription')
-            Customer.update_subscription(customer, trainer_name, start_date='2023-05-15')
+            try:
+                trainer_name = input('Enter your trainer name to update your subscription: ')
+                if not trainer_name:
+                    raise ValueError("Trainer Name cannot be empty")
+                Customer.update_subscription(customer, trainer_name, start_date='2023-05-15')
+            except ValueError as e:
+                print(e)
         elif choice == 7:
             print("You have logged out of the system", '\n')
             main()
@@ -569,10 +636,9 @@ def customer_menu(customer):
 
 
 def trainer_menu(trainer):
-    """This is the main program of tha application"""
-
+    """This is the function that runs the main tasks of a trainer"""
     while True:
-        print("WELCOME " + trainer['name'], '\n')
+        print("Welcome " + trainer['name'], '\n')
         print("1. Delete Trainer Account")
         print("2. View trainer details")
         print("3. Read Exercise Plan")
@@ -582,6 +648,7 @@ def trainer_menu(trainer):
         print("7. Logout")
         choice = int(input("Enter your choice (1-8): "))
         if choice == 1:
+            # Delete a trainer
             confirmDelete = input("Are you sure you want to delete your account? (Enter yes/no)")
             if confirmDelete == 'yes':
                 Trainer.delete(trainer['name'])
@@ -589,17 +656,25 @@ def trainer_menu(trainer):
                 trainer_menu(trainer)
                 break
         elif choice == 2:
-            print(trainer['name'], trainer['password'], trainer['email'], trainer['speciality'])
+            # view trainer details
+            print("Name: {:<10} Password: {:<10} Email: {:<20} speciality: {:<30}".format(trainer['name'],
+                                                                                          trainer['password'],
+                                                                                          trainer['email'],
+                                                                                          trainer['speciality']), '\n')
         elif choice == 3:
+            # return all exercise plans
             plans = Trainer.read_all_plans(trainer)
             for plan in plans:
                 print(plan.trainer, plan.equipment, plan.duration)
         elif choice == 4:
+            # create exercise plan
             Trainer.create_plan(trainer)
         elif choice == 5:
+            # delete exercise plan
             plan_name = input("Enter the name of the plan you want to delete")
             Trainer.delete_plan(trainer, plan_name)
         elif choice == 6:
+            # update exercise plan
             Trainer.update_plan(trainer)
         elif choice == 7:
             print("You have logged out of the system", '\n')
@@ -610,8 +685,9 @@ def trainer_menu(trainer):
 
 
 def main():
-    print("**WELCOME TO TU DUBLIN PYTHON GYM**", '\n')
+    """This is the main function that runs the application"""
 
+    print("****************** WELCOME TO TU DUBLIN PYTHON GYM ******************", '\n')
     print("1. Login as Customer")
     print("2. Login as trainer")
     print("3. Create Customer Account")
@@ -620,41 +696,72 @@ def main():
     print("6. Add Equipment")
     print("7. Delete Equipment")
     print("8. Exit")
-    choice = int(input("Enter your choice (1-3): "))
+    choice = int(input("Enter your choice (1-8): "))
     if choice == 1:
-        username = input("Enter your username: ")
-        password = input("Enter your password: ")
-        Customer.login(username, password)
+        try:
+            username = input("Enter your username: ")
+            if not username:
+                raise ValueError("Username cannot be empty")
+            password = input("Enter your password: ")
+            if not password:
+                raise ValueError("Password cannot be empty")
+            Customer.login(username, password)
+        except ValueError as e:
+            print(e)
     elif choice == 2:
         username = input("Enter your username: ")
         password = input("Enter your password: ")
         Trainer.login(username, password)
     elif choice == 3:
-        name = input("Enter customer name: ")
-        password = input("Enter customer password: ")
-        age = int(input("Enter customer age: "))
-        gender = input("Enter customer gender: ")
-        email = input("Enter customer email: ")
-        address = input("Enter customer address: ")
-        customer = Customer(name, password, age, gender, email, address)
-        customer.create()
-        # Return to main menu
-        main()
+        try:
+            name = input("Enter customer name: ")
+            if not name:
+                raise ValueError("Customer name cannot be empty")
+            password = input("Enter customer password: ")
+            if not password:
+                raise ValueError("Customer password cannot be empty")
+            age = int(input("Enter customer age: "))
+            if not age:
+                raise ValueError("Customer age cannot be empty")
+            gender = input("Enter customer gender: ")
+            email = input("Enter customer email: ")
+            address = input("Enter customer address: ")
+            customer = Customer(name, password, age, gender, email, address)
+            customer.create()
+            # Return to main menu
+            main()
+        except ValueError as e:
+            print(e)
     elif choice == 4:
-        name = input("Enter trainer name: ")
-        password = input("Enter trainer password: ")
-        email = input("Enter trainer email: ")
-        speciality = input("Enter trainer speciality: ")
-        trainer = Trainer(name, password, email, speciality)
-        trainer.create()
+        try:
+            name = input("Enter trainer name: ")
+            if not name:
+                raise ValueError("Trainer name cannot be empty")
+            password = input("Enter trainer password: ")
+            if not password:
+                raise ValueError("Trainer password cannot be empty")
+            email = input("Enter trainer email: ")
+            if not email:
+                raise ValueError("Trainer email cannot be empty")
+            speciality = input("Enter trainer speciality: ")
+            if not speciality:
+                raise ValueError("Trainer speciality cannot be empty")
+            trainer = Trainer(name, password, email, speciality)
+            trainer.create()
+        except ValueError as e:
+            print(e)
     elif choice == 5:
         equipments = Equipment.read_all()
         for e in equipments:
-            print(e.name)
+            print("Name: {:<10} Description: {:<25}".format(e.name, e.description), '\n')
+        # Return to main menu
+        main()
     elif choice == 6:
         Equipment.create()
     elif choice == 7:
         name = input("please enter the name of the equipment you want to delete: ")
+        if not name:
+            raise ValueError("Equipment name cannot be empty")
         Equipment.delete(name)
     elif choice == 8:
         print("It is sad to see you go, come back soon!!!")
