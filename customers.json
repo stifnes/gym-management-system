@@ -1,1 +1,1 @@
-[{"customer_id": 1, "name": "stifnes", "password": "samuel", "age": 30, "gender": "male", "email": "samuel", "address": "2Dublin", "subscriptions": []}, {"customer_id": 2, "name": "alice", "password": "admin", "age": 24, "gender": "female", "email": "alice@gmail.com", "address": "sligo", "subscriptions": []}]
+[{"customer_id": 1, "name": "stifnes", "password": "samuel", "age": 30, "gender": "male", "email": "123@13.com", "address": "dublin", "subscriptions": []}]

@@ -1,1 +1,14 @@
-[]
+[
+    {
+        "trainer": "jara",
+        "name": "cardio",
+        "equipment": "treadmill",
+        "duration": "10"
+    },
+    {
+        "trainer": "jara",
+        "name": "cardio",
+        "equipment": "treadmill",
+        "duration": "100"
+    }
+]
