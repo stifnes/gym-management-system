@@ -1,506 +1,665 @@
-from datetime import date
-
-customers = []
-trainers = []
-equipments = []
-exercise_plans = []
-subscriptions = []
-
-
-class Subscription:
-    def __init__(self, customer, trainer, exercise_plan, start_date, end_date):
-        self.customer = customer
-        self.trainer = trainer
-        self.exercise_plan = exercise_plan
-        self.start_date = start_date
-        self.end_date = end_date
-
-    def __str__(self):
-        return f"Subscription from {self.start_date} to {self.end_date} for {self.customer.name} with trainer {self.trainer.name}"
-
+import json
 
 class Customer:
-    def __init__(self, name, password, age, email, phone, address):
+    last_customer_id = 0
+    def __init__(self, name, password, age, gender, email, address):
+        self.customer_id = Customer.last_customer_id + 1
+        Customer.last_customer_id += 1
         self.name = name
         self.password = password
         self.age = age
+        self.gender = gender
         self.email = email
-        self.phone = phone
         self.address = address
+        self.subscriptions = []
+
+    def create(self):
+        with open('customers.json', 'r') as f:
+            data = json.load(f)
+
+        data.append({
+            'customer_id': self.customer_id,
+            'name': self.name,
+            'password': self.password,
+            'age': self.age,
+            'gender': self.gender,
+            'email': self.email,
+            'address': self.address,
+            'subscriptions': self.subscriptions
+        })
+        with open('customers.json', 'w') as f:
+            json.dump(data, f)
+            print('Customer Created Successfully')
 
     @staticmethod
-    def create_customer():
-        name = input("Enter customer name: ")
-        password = input("Enter password: ")
-        age = input("Enter age: ")
-        email = input("Enter email: ")
-        phone = input("Enter phone number: ")
-        address = input("Enter address: ")
-        with open('customers.txt', 'a') as f:
-            f.write(f"{name},{password},{age},{email},{phone},{address}\n")
-        print(f"Customer {name} created successfully.")
+    def read(name):
+        with open('customers.json', 'r') as f:
+            data = json.load(f)
+
+        for customer in data:
+            if customer['name'] == name:
+                return customer
 
     @staticmethod
-    def remove_customer(name):
-        with open('customers.txt', 'r') as f:
-            lines = f.readlines()
-        with open('customers.txt', 'w') as f:
-            found = False
-            for line in lines:
-                if line.startswith(name + ','):
-                    found = True
-                else:
-                    f.write(line)
-            if found:
-                print(f"Customer {name} removed successfully.")
-            else:
-                print(f"Customer {name} not found.")
+    def delete(name):
+        with open('customers.json', 'r') as f:
+            data = json.load(f)
 
-    def create_subscription(self, trainer, exercise_plan, start_date, end_date):
-        if not isinstance(trainer, Trainer):
-            raise ValueError("trainer must be a Trainer object")
-        if not isinstance(exercise_plan, ExercisePlan):
-            raise ValueError("exercise_plan must be an ExercisePlan object")
-        if not isinstance(start_date, str) or not isinstance(end_date, str):
-            raise ValueError("start_date and end_date must be strings")
+        for index, customer in enumerate(data):
+            if customer['name'] == name:
+                del data[index]
+                print('Customer ' + name + ' deleted successfully')
 
-        try:
-            subscription = Subscription(self, trainer.name, exercise_plan.plan_name, start_date, end_date)
-            subscriptions.append(subscription)
-            self.update_subscription_file()
-            print('Subscription created successfully')
-        except Exception as e:
-            print(f"Error creating subscription: {e}")
+        with open('customers.json', 'w') as f:
+            json.dump(data, f)
+        main()
 
-    def read_subscriptions(self):
-        if not subscriptions:
-            print("No subscriptions found.")
+    @staticmethod
+    def login(name, password):
+        with open('customers.json', 'r') as f:
+            data = json.load(f)
+        if len(data) == 0:
+            print('No records found')
         else:
+            for customer in data:
+                if customer['name'] == name and customer['password'] == password:
+                    customer_menu(customer)
+                else:
+                    print("Incorrect Username or Password")
+
+    def create_subscription(self):
+        trainer_name = input("Enter Trainer Name")
+        plan_name = input("Enter Plan Name")
+        start_date = input("Enter start date as YYYY-MM-DD")
+        end_date = input("Enter end date as YYYY-MM-DD")
+
+        subscription = Subscription(self['name'], trainer_name, plan_name, start_date, end_date)
+        subscription.create()
+
+        with open('customers.json', 'r') as f:
+            data = json.load(f)
+
+        for customer in data:
+            if customer['name'] == self['name']:
+                subscription = {
+                    'trainer_name': trainer_name,
+                    'plan_name': plan_name,
+                    'start_date': start_date,
+                    'end_date': end_date
+                }
+                customer['subscriptions'].append(subscription)
+        with open('customers.json', 'w') as f:
+            json.dump(data, f)
+            print('Subscription Added to customer successfully')
+
+    def read_subscription(self, trainer_name):
+        with open('customers.json', 'r') as f:
+            data = json.load(f)
+
+        for customer in data:
+            if customer['name'] == self['name']:
+                for subscription in customer['subscriptions']:
+                    if subscription.get('trainer_name') == trainer_name:
+                        return subscription
+        else:
+            print('Subscription not found')
+
+    def update_subscription(self, trainer_name, start_date=None, end_date=None):
+        with open('subscriptions.json', 'r') as f:
+            subscription_data = json.load(f)
+
+        for subscription in subscription_data:
+            if subscription['customer_name'] == self['name'] and subscription['trainer_name'] == trainer_name:
+                if start_date:
+                    subscription['start_date'] = start_date
+                if end_date:
+                    subscription['end_date'] = end_date
+                break
+
+        with open('subscriptions.json', 'w') as f:
+            json.dump(subscription_data, f)
+            print('Subscription Update Successfully')
+
+        with open('customers.json', 'r') as f:
+            customers_data = json.load(f)
+
+        for customer in customers_data:
+            subscriptions = customer['subscriptions']
             for subscription in subscriptions:
-                print(subscription)
+                if subscription['trainer_name'] == trainer_name:
+                    if start_date:
+                        subscription['start_date'] = start_date
+                    if end_date:
+                        subscription['end_date'] = end_date
+                    break
 
-    def update_subscription(self, subscription_index, trainer=None, exercise_plan=None, start_date=None, end_date=None):
-        if not isinstance(subscription_index, int):
-            raise ValueError("subscription_index must be an integer")
-        if subscription_index < 0 or subscription_index >= len(subscriptions):
-            raise ValueError(f"subscription_index out of range (0-{len(subscriptions) - 1})")
+        with open('customers.json', 'w') as f:
+            json.dump(customers_data, f)
+            print('Customers Subscription Update Successfully')
 
-        subscription = subscriptions[subscription_index]
-        if trainer and not isinstance(trainer, Trainer):
-            raise ValueError("trainer must be a Trainer object")
-        if exercise_plan and not isinstance(exercise_plan, ExercisePlan):
-            raise ValueError("exercise_plan must be an ExercisePlan object")
-        if start_date and not isinstance(start_date, str):
-            raise ValueError("start_date must be a string")
-        if end_date and not isinstance(end_date, str):
-            raise ValueError("end_date must be a string")
+    def delete_subscription(self, trainer_name):
+        with open('subscriptions.json', 'r') as f:
+            subscription_data = json.load(f)
 
-        try:
-            if trainer:
-                subscription.trainer = trainer
-            if exercise_plan:
-                subscription.exercise_plan = exercise_plan
-            if start_date:
-                subscription.start_date = start_date
-            if end_date:
-                subscription.end_date = end_date
-            self.update_subscription_file()
-        except Exception as e:
-            print(f"Error updating subscription: {e}")
+        for index, subscription in enumerate(subscription_data):
+            if subscription['customer_name'] == self['name'] and subscription['trainer_name'] == trainer_name:
+                del subscription_data[index]
+                print('Your Subscription with' + trainer_name + ' is deleted successfully')
+                break
 
-    def delete_subscription(self, subscription_index):
-        if not isinstance(subscription_index, int):
-            raise ValueError("subscription_index must be an integer")
-        if subscription_index < 0:
-            raise ValueError(f"subscription_index cannot be negative")
+        with open('subscriptions.json', 'w') as f:
+            json.dump(subscription_data, f)
 
-        try:
-            del subscriptions[subscription_index]
-            self.update_subscription_file()
-            print("Subscription Deleted Successfully")
-        except Exception as e:
-            print(f"Error deleting subscription: {e}")
+        with open('customers.json', 'r') as f:
+            customers_data = json.load(f)
 
-    def update_subscription_file(self):
-        try:
-            with open('subscriptions.txt', "w") as f:
-                for subscription in subscriptions:
-                    f.write(
-                        f"{self.name},{subscription.trainer},{subscription.exercise_plan},{subscription.start_date},{subscription.end_date}\n")
-        except Exception as e:
-            print(f"Error updating subscription file: {e}")
+        for customer in customers_data:
+            subscriptions = customer['subscriptions']
+            for index, subscription in enumerate(subscriptions):
+                if subscription['trainer_name'] == trainer_name:
+                    subscriptions.pop(index)
+                    break
 
+        with open('customers.json', 'w') as f:
+            json.dump(customers_data, f)
+            print('Subscription deleted from customer successfully')
 
-def customer_login():
-    username = input("Enter your username: ")
-    password = input("Enter your password: ")
-    with open('customers.txt', 'r') as f:
-        for line in f:
-            name, pwd, age, email, phone, address = line.strip().split(',')
-            if name == username and pwd == password:
-                print("Login successful as " + name)
-                customer = Customer(name, pwd, age, email, phone, address)
-                # do something with the customer object
-                customer_menu(customer)
-                return
-            else:
-                print("Incorrect username or password.")
-        else:
-            print("Account does not exist. Create an account first")
-            main()
+class Subscription:
+    subscription_id = 1
 
+    def __init__(self, customer_name, trainer_name, exercise_plan_name, start_date, end_date):
+        self.subscription_id = str(Subscription.subscription_id)
+        self.customer_name = customer_name
+        self.trainer_name = trainer_name
+        self.exercise_plan_name = exercise_plan_name
+        self.start_date = start_date
+        self.end_date = end_date
+        Subscription.subscription_id += 1
 
-def trainer_login():
-    username = input("Enter your username: ")
-    password = input("Enter your password: ")
-    for trainer in trainers:
-        if trainer.name == username and trainer.password == password:
-            print("Login successful as " + trainer.name)
-            # trainer = Trainer(name, pwd, age, specialization)
-            # do something with the trainer object
-            trainer_menu(trainer)
-            return trainer
-        else:
-            print("Incorrect username or password.")
-    # with open('trainers.txt', 'r') as f:
-    #     for line in f:
-    #         name, pwd, age, specialization = line.strip().split(',')
-    #         if name == username and pwd == password:
-    #             print("Login successful as a trainer.")
-    #             trainer = Trainer(name, pwd, age, specialization)
-    #             # do something with the trainer object
-    #             return
-    # print("Incorrect username or password.")
+    def create(self):
+        with open('subscriptions.json', 'r') as f:
+            data = json.load(f)
 
+        data.append({
+            'subscription_id': self.subscription_id,
+            'customer_name': self.customer_name,
+            'trainer_name': self.trainer_name,
+            'exercise_plan_name': self.exercise_plan_name,
+            'start_date': self.start_date,
+            'end_date': self.end_date,
+        })
 
-def customer_menu(customer):
-    print("Customer Menu:")
-    print("1. View subscriptions")
-    print("2. Create new subscription")
-    print("3. Update subscription")
-    print("4. Delete subscription")
-    print("5. Delete account")
-    print("6. Logout")
-    choice = input("Enter choice (1-7): ")
-    if choice == "1":
-        # print out the customer's subscriptions
-        customer.read_subscriptions()
-    elif choice == "2":
-        # create a new subscription for the customer
-        trainer_name = input('Please enter the name of the trainer')
+        with open('subscriptions.json', 'w') as f:
+            json.dump(data, f)
+            print('Subscription Created Successfully')
 
-        # check if trainer exists
-        def checkTrainer():
-            for trainer in trainers:
-                if trainer.name == trainer_name:
-                    # do something with the trainer object
-                    return trainer
-                else:
-                    print("Trainer does not exists. Create a new trainer")
-                    main()
-                    return
+    @staticmethod
+    def read(customer_name):
+        with open('subscriptions.json', 'r') as f:
+            data = json.load(f)
 
-        trainer1 = checkTrainer()
-        exercise_plan_name = input('Enter the name of the exercise plan you want to choose(e.g cardio)')
+        subscriptions = []
+        for subscription in data:
+            if subscription['customer_name'] == customer_name:
+                subscriptions.append(subscription)
 
-        def checkPlan():
-            for plan in exercise_plans:
-                if plan.plan_name == exercise_plan_name:
-                    return plan
-                else:
-                    print("Plan does not exists. Create a new trainer")
-                    main()
-                    return
+        return subscriptions
 
-        exercise_plan = checkPlan()
-        customer.create_subscription(trainer1, exercise_plan, "2023-05-14", "2023-06-14")
-    elif choice == "3":
-        # update the first subscription's trainer and duration
-        if len(subscriptions) == 0:
-            print("You currently dont have any subscriptions, Create a subscription first")
-        else:
-            trainer_name = input('Please enter the name of the trainer you want to have')
+    def update(self):
+        with open('subscriptions.json', 'r') as f:
+            data = json.load(f)
 
-            # check if trainer exists
-            def checkTrainer():
-                for trainer in trainers:
-                    if trainer.name == trainer_name:
-                        # do something with the trainer object
-                        return trainer
-                    else:
-                        print("Trainer does not exists. Try a different trainer")
-                        main()
-                        return
+        for subscription in data:
+            if subscription['subscription_id'] == self.subscription_id:
+                subscription.update({
+                    'customer_name': self.customer_name,
+                    'trainer_name': self.trainer_name,
+                    'exercise_plan_name': self.exercise_plan_name,
+                    'start_date': self.start_date,
+                    'end_date': self.end_date,
+                })
+                break
 
-            trainer1 = checkTrainer()
+        with open('subscriptions.json', 'w') as f:
+            json.dump(data, f)
 
-            def checkPlan():
-                for plan in exercise_plans:
-                    if plan.plan_name == exercise_plan_name:
-                        return plan
-                    else:
-                        print("Plan does not exists. Create a new trainer")
-                        main()
-                        return
+    @staticmethod
+    def delete(subscription_id):
+        with open('subscriptions.json', 'r') as f:
+            data = json.load(f)
 
-            exercise_plan = checkPlan()
-            customer.update_subscription(0, trainer1, exercise_plan, "2023-05-14", "2023-06-14")
-    elif choice == "4":
-        # delete the second subscription
-        subscription_index = int(
-            input('Please enter the number of the subscription to be deleted.e.g Enter 1 for first subscription'))
-        customer.delete_subscription(subscription_index - 1)
-    elif choice == "5":
-        customer.remove_customer(customer.name)
-    elif choice == "6":
-        customer.update_subscription_file()
-        return
-    else:
-        print("Invalid choice. Please try again.")
+        for index, subscription in enumerate(data):
+            if subscription['subscription_id'] == subscription_id:
+                del data[index]
+                print('Subscription ' + subscription_id + ' deleted successfully')
+                break
 
+        with open('subscriptions.json', 'w') as f:
+            json.dump(data, f)
 
 class Equipment:
-    def __init__(self, name, status):
+    def __init__(self, name, description):
         self.name = name
-        self.status = status
+        self.description = description
 
     @staticmethod
-    def add_equipment():
-        name = input("Enter equipment name: ")
-        status = input("Enter equipment status (working/not-working): ")
-        with open('equipment.txt', 'a') as f:
-            f.write(f"{name},{status}\n")
-        print(f"Equipment {name} added successfully.")
-
-    @staticmethod
-    def remove_equipment(name):
-        with open('equipment.txt', 'r') as f:
-            lines = f.readlines()
-        with open('equipment.txt', 'w') as f:
-            found = False
-            for line in lines:
-                if line.startswith(name + ','):
-                    found = True
-                else:
-                    f.write(line)
-            if found:
-                print(f"Equipment {name} removed successfully.")
+    def read_all():
+        with open('equipments.json', 'r') as f:
+            data = json.load(f)
+            equipments = []
+            if len(data) == 0:
+                print('No Equipments available')
             else:
-                print(f"Equipment {name} not found.")
+                for equipment in data:
+                    equipments.append(Equipment(equipment['name'], equipment['description']))
+                return equipments
 
+    @staticmethod
+    def read(name):
+        with open('equipments.json', 'r') as f:
+            data = json.load(f)
+            for equipment in data:
+                if equipment['name'] == name:
+                    return Equipment(equipment['name'], equipment['description'])
+        return None
 
-class ExercisePlan:
-    def __init__(self, trainer_name, plan_name, equipment, duration):
-        self.trainer_name = trainer_name
-        self.plan_name = plan_name
-        self.equipment = equipment
-        self.duration = duration
+    @staticmethod
+    def create():
+        name = input('Enter equipment name: ')
+        description = input('Enter equipment description: ')
+        with open('equipments.json', 'r+') as f:
+            data = json.load(f)
+            equipments = data
+            equipments.append({
+                'name': name,
+                'description': description
+            })
+            f.seek(0)
+            json.dump(data, f, indent=4)
+            f.truncate()
+        print('Equipment added successfully.')
 
-    def get_trainer(self):
-        return self.trainer
-
-    def get_equipment(self):
-        return self.equipment
-
-    def get_duration(self):
-        return self.duration
-
-    def write_to_file(self):
-        with open('exercisePlans.txt', 'a') as f:
-            f.write(f"{self.trainer_name},{self.plan_name},{self.equipment},{self.duration}\n")
-
-    def __str__(self):
-        return f"Trainer: {self.trainer_name}, Plan Name: {self.plan_name}, Equipment: {self.equipment}, Duration: {self.duration}"
+    @staticmethod
+    def delete(name):
+        with open('equipments.json', 'r+') as f:
+            data = json.load(f)
+            equipments = data
+            for equipment in equipments:
+                if equipment['name'] == name:
+                    equipments.remove(equipment)
+                    break
+            f.seek(0)
+            json.dump(data, f, indent=4)
+            f.truncate()
+        print('Equipment deleted successfully.')
 
 
 class Trainer:
-    def __init__(self, name, password, age, specialization):
+    trainer_id = 1
+
+    def __init__(self, name, password, email, speciality):
+        self.trainer_id = str(Trainer.trainer_id)
+        Trainer.trainer_id += 1
         self.name = name
         self.password = password
-        self.age = age
-        self.specialization = specialization
+        self.email = email
+        self.speciality = speciality
         self.exercise_plans = []
 
+    def create(self):
+        with open('trainers.json', 'r') as f:
+            data = json.load(f)
+
+        data.append({
+            'trainer_id': self.trainer_id,
+            'name': self.name,
+            'password': self.password,
+            'email': self.email,
+            'speciality': self.speciality,
+            'exercise_plans': self.exercise_plans
+        })
+
+        with open('trainers.json', 'w') as f:
+            json.dump(data, f)
+            print('Trainer Created Successfully')
+
     @staticmethod
-    def create_trainer():
-        name = input("Enter trainer name: ")
-        password = input("Enter password: ")
-        age = input("Enter age: ")
-        specialization = input("Enter specialization: ")
-        with open('trainers.txt', 'a') as f:
-            f.write(f"{name},{password},{age},{specialization}\n")
-        print(f"Trainer {name} created successfully.")
+    def read(name):
+        with open('trainers.json', 'r') as f:
+            data = json.load(f)
 
-    def create_exercise_plan(self, plan_name, equipment, duration):
-        exercise_plan = ExercisePlan(self, plan_name, equipment, duration)
-        with open('exercisePlans.txt', 'a') as f:
-            f.write(f"{self.name},{plan_name},{equipment},{duration}\n")
-        return exercise_plan
+        for trainer in data:
+            if trainer['name'] == name:
+                return trainer
 
-    def read_exercise_plans(self):
-        with open('exercisePlans.txt', 'r') as f:
-            for line in f:
-                fields = line.strip().split(',')
-                if fields[0] == self.name:
-                    plan_name = fields[1]
-                    equipment = fields[2]
-                    duration = int(fields[3])
-                    exercise_plan = ExercisePlan(self.name, plan_name, equipment, duration)
-            return exercise_plan
+        return None
 
-    def update_exercise_plan(self, old_plan_name, new_equipment, new_duration):
-        for plan in exercise_plans:
-            print(plan.plan_name)
-            if plan.plan_name == old_plan_name:
-                plan.equipment = new_equipment
-                plan.duration = new_duration
-                print('Plan updated successfully')
-            else:
-                print('Plan does not exists')
-        with open('exercisePlans.txt', 'w') as f:
-            for exercise_plan in exercise_plans:
-                f.write(f"{self.name},{exercise_plan.plan_name},{exercise_plan.equipment},{exercise_plan.duration}\n")
+    def update(self):
+        with open('trainers.json', 'r') as f:
+            data = json.load(f)
 
-    # def delete_exercise_plan(self, exercise_plan_name):
-    #     # exercise_plans = self.read_exercise_plans()
-    #     for plan in exercise_plans:
-    #         print(plan.plan_name)
-    #         print(plan.trainer)
-    #     if exercise_plan_name not in exercise_plans:
-    #         raise ValueError(f"{self.name} does not have an exercise plan with the given details.")
-    #     exercise_plans.remove(exercise_plan_name)
-    #     with open('exercisePlans.txt', 'w') as f:
-    #         for exercise_plan in exercise_plans:
-    #             f.write(f"{self.name},{exercise_plan_name}, {exercise_plan.equipment.name}, {exercise_plan.duration}\n")
-    def delete_exercise_plan(self, plan_index):
-        if not isinstance(plan_index, int):
-            raise ValueError("plan_index must be an integer")
-        if plan_index < 0 or plan_index > len(exercise_plans):
-            raise ValueError(f"plan_index out of range (0-{len(exercise_plans) - 1})")
-        print(exercise_plans[plan_index].plan_name)
-        try:
-            del exercise_plans[plan_index]
-            self.write_exercise_plans_to_file()
-            print("Exercise plan Deleted Successfully")
-        except Exception as e:
+        for index, trainer in enumerate(data):
+            if trainer['email'] == self.email:
+                data[index] = {
+                    'name': self.name,
+                    'age': self.age,
+                    'email': self.email,
+                }
+                break
 
-            print(f"Error deleting Exercise plan : {e}")
+        with open('trainers.json', 'w') as f:
+            json.dump(data, f)
 
-    def write_exercise_plans_to_file(self):
-        try:
-            with open('exercisePlans.txt.txt', "w") as f:
+    @staticmethod
+    def delete(name):
+        with open('trainers.json', 'r') as f:
+            data = json.load(f)
+
+        for index, trainer in enumerate(data):
+            if trainer['name'] == name:
+                del data[index]
+                print('Trainer ' + name + ' deleted successfully')
+                break
+
+        with open('trainers.json', 'w') as f:
+            json.dump(data, f)
+
+    @staticmethod
+    def login(name, password):
+        with open('trainers.json', 'r') as f:
+            data = json.load(f)
+        if len(data) == 0:
+            print('No records found')
+        else:
+            for trainer in data:
+                if trainer['name'] == name and trainer['password'] == password:
+                    trainer_menu(trainer)
+
+    def read_all_plans(self):
+        plans = ExercisePlan.read_all()
+        trainer_plans = []
+        for plan in plans:
+            if plan.trainer == self['name']:
+                trainer_plans.append(plan)
+        return trainer_plans
+
+    def read_plan(self):
+        return ExercisePlan.read(self['name'])
+
+    def create_plan(self):
+        plan_name = input('Enter plan name: ')
+        equipment = input('Enter equipment name: ')
+        duration = input('Enter duration: ')
+        exercise_plan = ExercisePlan(self['name'],plan_name, equipment, duration)
+        exercise_plan.create()
+
+        with open('trainers.json', 'r') as f:
+            trainers_data = json.load(f)
+
+        for trainer in trainers_data:
+            if trainer['name'] == self['name']:
+                exercise_plan = {
+                    'plan_name': plan_name,
+                    'equipment': equipment,
+                    'duration': duration,
+                }
+                trainer['exercise_plans'].append(exercise_plan)
+        with open('trainers.json', 'w') as f:
+            json.dump(trainers_data, f)
+            print('Exercise Plan added to trainer successfully')
+
+    def update_plan(self):
+        exercise_plan = ExercisePlan.read(self['name'])
+        if exercise_plan:
+            exercise_plan.name = input('Enter new plan name: ')
+            exercise_plan.equipment = input('Enter new equipment name: ')
+            exercise_plan.duration = input('Enter new duration: ')
+            exercise_plan.update()
+
+            with open('trainers.json', 'r') as f:
+                trainers_data = json.load(f)
+
+            for trainer in trainers_data:
+                exercise_plans = trainer['exercise_plans']
                 for plan in exercise_plans:
-                    f.write(
-                        f"{self.name},{plan.plan_name},{plan.equipment},{plan.duration}\n")
-        except Exception as e:
-            print(f"Error updating subscription file: {e}")
+                    if exercise_plan.name:
+                        plan['plan_name'] = exercise_plan.name
+                    if exercise_plan.equipment:
+                        plan['equipment'] = exercise_plan.equipment
+                    if exercise_plan.duration:
+                        plan['duration'] = exercise_plan.duration
+                    break
+
+            with open('trainers.json', 'w') as f:
+                json.dump(trainers_data, f)
+                print('Exercise Plan updated to trainer successfully')
+        else:
+            print('Plan not updated, try again')
+
+    def delete_plan(self, plan_name):
+        ExercisePlan.delete(self['name'], plan_name)
+
+        with open('trainers.json', 'r') as f:
+            trainers_data = json.load(f)
+
+        for trainer in trainers_data:
+            exercise_plans = trainer['exercise_plans']
+            for index, plan in enumerate(exercise_plans):
+                if plan['plan_name'] == plan_name:
+                    exercise_plans.pop(index)
+                    break
+
+        with open('trainers.json', 'w') as f:
+            json.dump(trainers_data, f)
+            print('Subscription deleted from customer successfully')
 
 
-def trainer_menu(trainer):
-    print("Trainer Menu:")
-    print("1. View exercise plans")
-    print("2. Create new exercise plans")
-    print("3. Update exercise plans")
-    print("4. Delete exercise plans")
-    print("5. Delete account")
-    print("6. Logout")
-    choice = input("Enter choice (1-7): ")
-    if choice == "1":
-        # print out the customer's subscriptions
-        print(trainer.read_exercise_plans())
-    elif choice == "2":
-        # create a new exercise plan for the trainer
-        plan_name = input("please enter the name of the plan: ")
-        duration = int(input('please enter the duration of the plan: '))
-        equipment1 = Equipment('bench', 'working')
-        print(trainer.name, plan_name, equipment1.name, duration)
-        trainer.create_exercise_plan(plan_name, equipment1.name, duration)
-    elif choice == "3":
-        # update the exercise plan of trainer
-        plan_name = input("please enter the name of the plan: ")
-        new_equipment = input("enter new equipment: ")
-        new_duration = int(input("enter new duration: "))
-        trainer.update_exercise_plan(plan_name, new_equipment, new_duration)
-    elif choice == "4":
-        # delete an exercise plan
-        plan_index = int(input('Please enter the number of the plan to be deleted: '))
-        trainer.delete_exercise_plan(plan_index - 1)
-    elif choice == "5":
-        trainer.remove_trainer(trainer.name)
-    elif choice == "6":
-        trainer.update_subscription_file()
-        return
-    else:
-        print("Invalid choice. Please try again.")
+class ExercisePlan:
+
+    def __init__(self, trainer, name, equipment, duration):
+        self.trainer = trainer
+        self.name = name
+        self.equipment = equipment
+        self.duration = duration
+
+    @staticmethod
+    def read_all():
+        with open('exercise_plans.json', 'r') as f:
+            data = json.load(f)
+            plans = []
+            for plan in data:
+                plans.append(ExercisePlan(plan['trainer'],plan['name'], plan['equipment'], plan['duration']))
+            return plans
+
+    @staticmethod
+    def read(trainer):
+        with open('exercise_plans.json', 'r') as f:
+            data = json.load(f)
+            for plan in data:
+                if plan['trainer'] == trainer:
+                    return ExercisePlan(plan['trainer'], plan['name'], plan['equipment'], plan['duration'])
+        return None
+
+    def create(self):
+        with open('exercise_plans.json', 'r+') as f:
+            data = json.load(f)
+            plans = data
+            plans.append({
+                'trainer': self.trainer,
+                'name': self.name,
+                'equipment': self.equipment,
+                'duration': self.duration
+            })
+            f.seek(0)
+            json.dump(data, f, indent=4)
+            f.truncate()
+        print('Exercise plan added successfully.')
+
+    def update(self):
+        with open('exercise_plans.json', 'r+') as f:
+            data = json.load(f)
+            plans = data
+            for plan in plans:
+                if plan['trainer'] == self.trainer:
+                    plan['name'] = self.name
+                    plan['equipment'] = self.equipment
+                    plan['duration'] = self.duration
+                    break
+            f.seek(0)
+            json.dump(data, f, indent=4)
+            f.truncate()
+        print('Exercise plan updated successfully.')
+
+    @staticmethod
+    def delete(trainer, plan_name):
+        with open('exercise_plans.json', 'r+') as f:
+            data = json.load(f)
+            plans = data
+            for plan in plans:
+                if plan['trainer'] == trainer and plan['name'] == plan_name:
+                    plans.remove(plan)
+                    break
+            f.seek(0)
+            json.dump(data, f, indent=4)
+            f.truncate()
+        print('Exercise plan deleted successfully.')
 
 
-with open("trainers.txt", "r") as file:
-    for line in file:
-        data = line.strip().split(",")
-        trainer = Trainer(data[0], data[1], data[2], data[3])
-        trainers.append(trainer)
 
-with open("subscriptions.txt", "r") as file:
-    for line in file:
-        data = line.strip().split(",")
-        subscription = Subscription(data[0], data[1], data[2], data[3], data[4])
-        subscriptions.append(subscription)
+def customer_menu(customer):
+    """This is the main program of tha application"""
 
-with open("exercisePlans.txt", "r") as file:
-    for line in file:
-        data = line.strip().split(",")
-        exercise_plan = ExercisePlan(data[0], data[1], data[2], data[3])
-        exercise_plans.append(exercise_plan)
-
-with open("customers.txt", "r") as file:
-    for line in file:
-        data = line.strip().split(",")
-        customer = Customer(data[0], data[1], data[2], data[3], data[4], data[4])
-        customers.append(customer)
-
-with open("equipment.txt", "r") as file:
-    for line in file:
-        data = line.strip().split(",")
-        equipment = Equipment(data[0], data[1])
-        equipments.append(equipment)
-
-
-# main program
-def main():
     while True:
-        print("**WELCOME TO TU DUBLIN PYTHON GYM**", '\n')
-        print("1. Customer Login")
-        print("2. Trainer Login")
-        print("3. Create Customer Account")
-        print("4. Create Trainer Account")
-        print("5. Delete Customer Account")
-        print("6. Add Equipment")
-        print("7. Delete Equipment")
-        print("8. Exit")
+        print("WELCOME " + customer['name'], '\n')
+        print("1. Delete Customer Account")
+        print("2. View account details")
+        print("3. Create Subscription")
+        print("4. Read Subscription")
+        print("5. Delete Subscription")
+        print("6. Update Subscription")
+        print("7. Logout")
         choice = int(input("Enter your choice (1-8): "))
         if choice == 1:
-            customer_login()
-            break
+            confirmDelete = input("Are you sure you want to delete your account? (Enter yes/no)")
+            if confirmDelete == 'yes':
+                Customer.delete(customer['name'])
+            elif confirmDelete == 'no':
+                customer_menu(customer)
+                break
         elif choice == 2:
-            trainer_login()
-            break
+            print(customer['name'], customer['password'], customer['gender'], customer['age'], customer['email'])
         elif choice == 3:
-            Customer.create_customer()
+            Customer.create_subscription(customer)
         elif choice == 4:
-            Trainer.create_trainer()
+            trainer_name = input("Enter your trainer name to see your subscription")
+            print(Customer.read_subscription(customer, trainer_name))
         elif choice == 5:
-            name = input("Enter the name of the customer to delete: ")
-            Customer.remove_customer(name)
+            trainer_name = input('Enter your trainer name to delete your subscription')
+            Customer.delete_subscription(customer, trainer_name)
         elif choice == 6:
-            Equipment.add_equipment()
+            # update the start date of a subscription
+            trainer_name = input('Enter your trainer name to update your subscription')
+            Customer.update_subscription(customer, trainer_name, start_date='2023-05-15')
         elif choice == 7:
-            name = input("Enter the name of the equipment to delete: ")
-            Equipment.remove_equipment(name)
-        elif choice == 8:
-            print("It is sad to see you go, come back soon!!!")
+            print("You have logged out of the system", '\n')
+            main()
             break
         else:
             print("Invalid choice. Please try again.")
+
+
+def trainer_menu(trainer):
+    """This is the main program of tha application"""
+
+    while True:
+        print("WELCOME " + trainer['name'], '\n')
+        print("1. Delete Trainer Account")
+        print("2. View trainer details")
+        print("3. Read Exercise Plan")
+        print("4. Create Exercise Plan")
+        print("5. Delete Exercise Plan")
+        print("6. Update Exercise Plan")
+        print("7. Logout")
+        choice = int(input("Enter your choice (1-8): "))
+        if choice == 1:
+            confirmDelete = input("Are you sure you want to delete your account? (Enter yes/no)")
+            if confirmDelete == 'yes':
+                Trainer.delete(trainer['name'])
+            elif confirmDelete == 'no':
+                trainer_menu(trainer)
+                break
+        elif choice == 2:
+            print(trainer['name'], trainer['password'], trainer['email'], trainer['speciality'])
+        elif choice == 3:
+            plans = Trainer.read_all_plans(trainer)
+            for plan in plans:
+                print(plan.trainer, plan.equipment, plan.duration)
+        elif choice == 4:
+            Trainer.create_plan(trainer)
+        elif choice == 5:
+            plan_name = input("Enter the name of the plan you want to delete")
+            Trainer.delete_plan(trainer, plan_name)
+        elif choice == 6:
+            Trainer.update_plan(trainer)
+        elif choice == 7:
+            print("You have logged out of the system", '\n')
+            main()
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+
+def main():
+    print("**WELCOME TO TU DUBLIN PYTHON GYM**", '\n')
+
+    print("1. Login as Customer")
+    print("2. Login as trainer")
+    print("3. Create Customer Account")
+    print("4. Create Trainer Account")
+    print("5. See All Equipment")
+    print("6. Add Equipment")
+    print("7. Delete Equipment")
+    print("8. Exit")
+    choice = int(input("Enter your choice (1-3): "))
+    if choice == 1:
+        username = input("Enter your username: ")
+        password = input("Enter your password: ")
+        Customer.login(username, password)
+    elif choice == 2:
+        username = input("Enter your username: ")
+        password = input("Enter your password: ")
+        Trainer.login(username, password)
+    elif choice == 3:
+        name = input("Enter customer name: ")
+        password = input("Enter customer password: ")
+        age = int(input("Enter customer age: "))
+        gender = input("Enter customer gender: ")
+        email = input("Enter customer email: ")
+        address = input("Enter customer address: ")
+        customer = Customer(name, password, age, gender, email, address)
+        customer.create()
+        # Return to main menu
+        main()
+    elif choice == 4:
+        name = input("Enter trainer name: ")
+        password = input("Enter trainer password: ")
+        email = input("Enter trainer email: ")
+        speciality = input("Enter trainer speciality: ")
+        trainer = Trainer(name, password, email, speciality)
+        trainer.create()
+    elif choice == 5:
+        equipments = Equipment.read_all()
+        for e in equipments:
+            print(e.name)
+    elif choice == 6:
+        Equipment.create()
+    elif choice == 7:
+        name = input("please enter the name of the equipment you want to delete: ")
+        Equipment.delete(name)
+    elif choice == 8:
+        print("It is sad to see you go, come back soon!!!")
+    else:
+        print("Invalid choice. Please try again.")
 
 
 main()
